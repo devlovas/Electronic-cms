@@ -3,8 +3,8 @@
     <div class='login_box'>
 
       <!-- 头像区域 -->
-      <div class='avatar_box'>
-        <img src='../assets/avatar.png' alt='avatar'>
+      <div class='login_title'>
+        <h1>产品后台管理系统</h1>
       </div>
 
       <!-- 表单区域 -->
@@ -50,7 +50,7 @@ export default {
         // 验证密码是否合法
         password: [
           { required: true, message: '请输入密码', tigger: 'blur' },
-          { min: 3, max: 15, message: '长度在 3 到 10 个字符', tigger: 'blur' }
+          { min: 6, max: 15, message: '长度在 6 到 15 个字符', tigger: 'blur' }
         ]
       }
     }
@@ -80,7 +80,7 @@ export default {
 <style lang='less' scoped>
   .login_container {
     height: 100%;
-    background-color: #2b4b6b;
+    background-color: #00afb9;
   }
 
   .login_box {
@@ -92,25 +92,19 @@ export default {
     border-radius: 3px;
     position: absolute;
     transform: translate(-50%, -50%);
+  }
 
-    .avatar_box {
-      left: 50%;
-      width: 150px;
-      height: 150px;
-      border: 1px solid #EEE;
-      border-radius: 50%;
-      box-sizing: border-box;
-      position: absolute;
-      transform: translate(-50%, -50%);
-      box-shadow: -6px 0px 5px #CCC;
-      padding: 10px;
-
-      img {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background-color: #EEE;
-      }
+  .login_title {
+    height: 62px;
+    padding: 15px;
+    line-height: 38px;
+    font-size: 15px;
+    background-color: #006d77;
+    // background-color: #373f51;
+    box-sizing: border-box;
+    color: #d8dbe2;
+    h1 {
+      margin: 0;
     }
   }
 
