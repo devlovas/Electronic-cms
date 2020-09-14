@@ -25,6 +25,7 @@ import {
   Switch,
   Card,
   Row,
+  Tag,
   Col
 } from 'element-ui'
 
@@ -50,6 +51,7 @@ Vue.use(Dialog)
 Vue.use(Switch)
 Vue.use(Card)
 Vue.use(Row)
+Vue.use(Tag)
 Vue.use(Col)
 Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.$message = Message

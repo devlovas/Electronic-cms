@@ -22,7 +22,7 @@
       <!-- 用户列表区域 -->
       <el-table :data='userList' border stripe>
         <el-table-column type='index' label='#'  fixed></el-table-column>
-        <el-table-column label='姓名' prop='username'  fixed></el-table-column>
+        <el-table-column label='账号' prop='username'  fixed></el-table-column>
         <el-table-column label='角色' prop='role_name'></el-table-column>
         <el-table-column label='邮箱' prop='email'></el-table-column>
         <el-table-column label='电话' prop='mobile'></el-table-column>
@@ -35,7 +35,7 @@
         <el-table-column label='操作' fixed='right' width='175'>
           <template slot-scope='scope'>
             <el-button type='primary' icon='el-icon-edit' size='mini' @click='editUser(scope.row.id)'></el-button>
-            <el-button type='danger' icon='el-icon-delete' size='mini' @click='removeUserById(scope.row.id)'></el-button>
+            <el-button type='danger' icon='el-icon-delete' size='mini' @click='removeUserById(scope.row)'></el-button>
             <el-tooltip effect='dark' content='分配权限' placement='top' :enterable='false'>
               <el-button type='warning' icon='el-icon-setting' size='mini'></el-button>
             </el-tooltip>
@@ -188,13 +188,14 @@ export default {
       this.total = res.data.total
     },
     // 删除用户
-    removeUserById: function (userId) {
+    removeUserById: function (userInfo) {
       this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
-        const { data: res } = await this.$http.delete('users/' + userId)
+        if (userInfo.username === 'admin') return this.$message.error('您没有该操作权限！')
+        const { data: res } = await this.$http.delete('users/' + userInfo.id)
         if (res.meta.status !== 200) return this.$message.error('删除用户失败！ 请稍后再试...')
         this.$message({ type: 'success', message: '删除成功!' })
         this.getUserList()
