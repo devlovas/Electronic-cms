@@ -23,6 +23,7 @@ import {
   Tooltip,
   Dialog,
   Switch,
+  Tree,
   Card,
   Row,
   Tag,
@@ -49,6 +50,7 @@ Vue.use(Pagination)
 Vue.use(Tooltip)
 Vue.use(Dialog)
 Vue.use(Switch)
+Vue.use(Tree)
 Vue.use(Card)
 Vue.use(Row)
 Vue.use(Tag)

@@ -59,14 +59,31 @@
         <el-table-column label='名称' prop='roleName'></el-table-column>
         <el-table-column label='描述' prop='roleDesc'></el-table-column>
         <el-table-column label='操作' width='287px'>
-          <template>
+          <template slot-scope='scope'>
             <el-button size='mini' type='primary' icon='el-icon-edit'>编辑</el-button>
             <el-button size='mini' type='danger' icon='el-icon-delete'>删除</el-button>
-            <el-button size='mini' type='warning' icon='el-icon-setting'>分配权限</el-button>
+            <el-button size='mini' type='warning' icon='el-icon-setting' @click='showSetRightsDialog(scope.row)'>分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 分配权限功能面板 -->
+    <el-dialog title='分配权限' :visible.sync='rightsDialogVisible' @close='rightsIds = []'>
+      <el-tree
+      node-key='id'
+      show-checkbox
+      ref='rightsRef'
+      :data="rightsList"
+      :default-expanded-keys='rightsIds'
+      :default-checked-keys='rightsIds'
+      :props="rightsProps">
+      </el-tree>
+      <span slot='footer' class='dialog-footer'>
+        <el-button @click='rightsDialogVisible = false'>取消</el-button>
+        <el-button type='primary' @click='rightsSubimt'>确认</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -74,8 +91,18 @@
 export default {
   data: function () {
     return {
+      rightsIds: [],
       // 角色列表
-      rolesList: []
+      rolesList: [],
+      // 权限列表
+      rightsList: [],
+
+      rightsProps: {
+        children: 'children',
+        label: 'authName'
+      },
+      // 分配权限功能面板可见状态
+      rightsDialogVisible: false
     }
   },
   created: function () {
@@ -121,6 +148,7 @@ export default {
         }
       }, 100)
     },
+    // 删除角色权限
     removeRightsById: function (role, rightsId) {
       this.$confirm('此操作将删除该权限, 是否继续?', '提示', {
         confirmButtonText: '确定',
@@ -134,6 +162,28 @@ export default {
       }).catch(() => {
         this.$message({ type: 'info', message: '已取消操作' })
       })
+    },
+    rightsSubimt: async function () {
+      const rightsRef = this.$refs.rightsRef
+      const checkedKeys = rightsRef.getCheckedKeys().concat(rightsRef.getHalfCheckedKeys())
+      const { data: res } = await this.$http.post(`roles/${this.roleId}/rights`, { rids: checkedKeys.join(',') })
+      if (res.meta.status !== 200) return this.$message.error('操作失败！ 请稍后再试...')
+      this.$message.success('操作成功！')
+      this.rightsDialogVisible = false
+      this.getRolesList()
+    },
+    getRightsThrId: function (node, arr) {
+      if (!node.children) { return arr.push(node.id) }
+      node.children.forEach(item => this.getRightsThrId(item, arr))
+    },
+    showSetRightsDialog: async function (data) {
+      this.roleId = data.id
+      this.rightsDialogVisible = true
+      // 获取权限列表
+      const { data: res } = await this.$http.get('rights/tree')
+      if (res.meta.status !== 200) return this.$messgae.error('数据获取失败！')
+      this.getRightsThrId(data, this.rightsIds)
+      this.rightsList = res.data
     }
   }
 }
