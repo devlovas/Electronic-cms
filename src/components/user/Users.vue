@@ -36,12 +36,13 @@
           <template slot-scope='scope'>
             <el-button type='primary' icon='el-icon-edit' size='mini' @click='editUser(scope.row.id)'></el-button>
             <el-button type='danger' icon='el-icon-delete' size='mini' @click='removeUserById(scope.row)'></el-button>
-            <el-tooltip effect='dark' content='分配权限' placement='top' :enterable='false'>
-              <el-button type='warning' icon='el-icon-setting' size='mini'></el-button>
+            <el-tooltip effect='dark' content='分配角色' placement='top' :enterable='false'>
+              <el-button type='warning' icon='el-icon-setting' size='mini' @click='showSetRolesDislog(scope.row)'></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
+
       <!-- 分页功能区域 -->
       <el-pagination
       @size-change="handleSizeChange"
@@ -52,6 +53,33 @@
       layout="total, sizes, prev, pager, next, jumper"
       :total="total"></el-pagination>
     </el-card>
+
+    <!-- 分配角色功能面板 -->
+    <el-dialog title='分配角色' :visible.sync='setRolesVisible' @close='closeSetRolesDialog'>
+      <el-form :model='setRolesForm' ref='setRoleFormRef' label-width='80px'>
+        <el-form-item label='当前用户'>
+          <el-input v-model='username' disabled></el-input>
+        </el-form-item>
+        <el-form-item label='当前角色'>
+          <el-input v-model='rolename' disabled></el-input>
+        </el-form-item>
+        <el-form-item label='分配角色'>
+          <el-select v-model='setRolesForm.rid' placeholder="请选择">
+            <el-option
+              v-for="item in rolesList"
+              :key="item.id"
+              :value="item.id"
+              :label="item.roleName">
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot='footer' class='dialog-footer'>
+        <el-button @click='setRolesVisible = false'>取消</el-button>
+        <el-button type='primary' @click='setRolesSubimt'>确认</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 添加用户功能面板 -->
     <el-dialog title='添加用户' :visible.sync='addUserBoxVisible' @close='$refs.addUserFormRef.resetFields()' width='50%'>
       <el-form :model='addUserForm' :rules='addUserFormRules' ref='addUserFormRef' label-width='60px'>
@@ -73,6 +101,7 @@
         <el-button type='primary' @click='addUserSubmit'>确定</el-button>
       </span>
     </el-dialog>
+
     <!-- 修改用户功能面板 -->
     <el-dialog title='修改用户' :visible.sync='editUserBoxVisible' @close='$refs.editUserFormRef.resetFields()' width='50%'>
       <el-form :model='editUserForm' :rules='editUserFormRules' ref='editUserFormRef' label-width='60px'>
@@ -121,6 +150,10 @@ export default {
         mobile: '',
         email: ''
       },
+      setRolesForm: {
+        id: '',
+        rid: ''
+      },
       // 修改用户表单数据
       editUserForm: {},
       // 添加用户表单规则验证
@@ -157,8 +190,12 @@ export default {
           { validator: checkEmail, trigger: 'blur' }
         ]
       },
+      username: '',
+      rolename: '',
+      setRolesVisible: false,
       addUserBoxVisible: false, // 添加用户功能面板可见状态
       editUserBoxVisible: false, // 修改用户功能面板可见状态
+      rolesList: [],
       userList: [],
       total: 0
     }
@@ -186,6 +223,14 @@ export default {
       res.data.users.forEach(item => { item.create_time = this.parseDate(item.create_time) })
       this.userList = res.data.users
       this.total = res.data.total
+    },
+    setRolesSubimt: async function () {
+      console.log(this.setRolesForm)
+      const { data: res } = await this.$http.put(`users/${this.setRolesForm.id}/role`, this.setRolesForm)
+      if (res.meta.status !== 200) return this.$message.error('操作失败！ 请稍后再试...')
+      this.$message.success('操作成功！')
+      this.setRolesVisible = false
+      this.getUserList()
     },
     // 删除用户
     removeUserById: function (userInfo) {
@@ -241,6 +286,20 @@ export default {
         this.editUserBoxVisible = false
         this.getUserList()
       })
+    },
+    showSetRolesDislog: async function (userInfo) {
+      this.rolename = userInfo.role_name
+      this.username = userInfo.username
+
+      const { data: res } = await this.$http.get('roles')
+      if (res.meta.status !== 200) return this.$message.error('数据获取失败！')
+      this.setRolesForm.id = userInfo.id
+      this.setRolesVisible = true
+      this.rolesList = res.data
+    },
+    closeSetRolesDialog: function () {
+      this.$refs.setRoleFormRef.resetFields()
+      this.setRolesForm.rid = ''
     }
   }
 }

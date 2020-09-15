@@ -16,6 +16,8 @@ import {
   BreadcrumbItem,
   MenuItem,
   Submenu,
+  Select,
+  Option,
   Table,
   TableColumn,
   Pagination,
@@ -44,6 +46,8 @@ Vue.use(Breadcrumb)
 Vue.use(BreadcrumbItem)
 Vue.use(MenuItem)
 Vue.use(Submenu)
+Vue.use(Select)
+Vue.use(Option)
 Vue.use(Table)
 Vue.use(TableColumn)
 Vue.use(Pagination)

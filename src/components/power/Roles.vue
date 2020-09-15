@@ -13,7 +13,7 @@
       <!-- 添加角色按扭 -->
       <el-row>
         <el-col>
-          <el-button type='primary'>添加角色</el-button>
+          <el-button type='primary' @click='addRolesVisible = true'>添加角色</el-button>
         </el-col>
       </el-row>
 
@@ -60,13 +60,45 @@
         <el-table-column label='描述' prop='roleDesc'></el-table-column>
         <el-table-column label='操作' width='287px'>
           <template slot-scope='scope'>
-            <el-button size='mini' type='primary' icon='el-icon-edit'>编辑</el-button>
-            <el-button size='mini' type='danger' icon='el-icon-delete'>删除</el-button>
+            <el-button size='mini' type='primary' icon='el-icon-edit' @click='showEditRoleDialog(scope.row)'>编辑</el-button>
+            <el-button size='mini' type='danger' icon='el-icon-delete' @click='deleteRole(scope.row)'>删除</el-button>
             <el-button size='mini' type='warning' icon='el-icon-setting' @click='showSetRightsDialog(scope.row)'>分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 添加角色 -->
+    <el-dialog title='添加角色' :visible.sync='addRolesVisible' @close='$refs.addRoleFormRef.resetFields()'>
+      <el-form :model='addRoleForm' :rules='addRoleFormRules' ref='addRoleFormRef' label-width='80px'>
+        <el-form-item label='角色名称' prop='roleName'>
+          <el-input v-model='addRoleForm.roleName' placeholder='请输入角色名称'></el-input>
+        </el-form-item>
+        <el-form-item label='角色描述' prop='roleDesc'>
+          <el-input v-model='addRoleForm.roleDesc' placeholder='请输入角色描述'></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot='footer' class='dialog-footer'>
+        <el-button @click='addRolesVisible = false'>取消</el-button>
+        <el-button type='primary' @click='addRolesSubimt'>确认</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 编辑角色 -->
+    <el-dialog title='修改角色' :visible.sync='editRolesVisible' @close='$refs.editFoleFormRef.resetFields()'>
+      <el-form :model='editRoleForm' :rules='editFoleFormRules' ref='editFoleFormRef' label-width='80px'>
+        <el-form-item label='角色名称' prop='roleName'>
+          <el-input v-model='editRoleForm.roleName' placeholder='请输入角色名称'></el-input>
+        </el-form-item>
+        <el-form-item label='角色描述' prop='roleDesc'>
+          <el-input v-model='editRoleForm.roleDesc' placeholder='请输入角色描述'></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot='footer' class='dialog-footer'>
+        <el-button @click='editRolesVisible = false'>取消</el-button>
+        <el-button type='primary' @click='editRolesSubimt'>确认</el-button>
+      </span>
+    </el-dialog>
 
     <!-- 分配权限功能面板 -->
     <el-dialog title='分配权限' :visible.sync='rightsDialogVisible' @close='rightsIds = []'>
@@ -101,6 +133,37 @@ export default {
         children: 'children',
         label: 'authName'
       },
+      addRoleForm: {
+        roleName: '',
+        roleDesc: ''
+      },
+      editRoleForm: {
+        roleId: '',
+        roleName: '',
+        roleDesc: ''
+      },
+      addRoleFormRules: {
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' },
+          { min: 2, max: 10, message: '长度在 2 到 10个字符之间', trigger: 'blur' }
+        ],
+        roleDesc: [
+          { required: true, message: '请输入角色描述', trigger: 'blur' },
+          { min: 2, max: 50, message: '长度在 2 到 50个字符之间', trigger: 'blur' }
+        ]
+      },
+      editFoleFormRules: {
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' },
+          { min: 2, max: 10, message: '长度在 2 到 10个字符之间', trigger: 'blur' }
+        ],
+        roleDesc: [
+          { required: true, message: '请输入角色描述', trigger: 'blur' },
+          { min: 2, max: 50, message: '长度在 2 到 50个字符之间', trigger: 'blur' }
+        ]
+      },
+      addRolesVisible: false,
+      editRolesVisible: false,
       // 分配权限功能面板可见状态
       rightsDialogVisible: false
     }
@@ -110,6 +173,20 @@ export default {
     this.tagTogglerAnim()
   },
   methods: {
+    deleteRole: function (roleRow) {
+      this.$confirm('此操作将删除该角色, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        const { data: res } = await this.$http.delete(`roles/${roleRow.id}`)
+        if (res.meta.status !== 200) return this.$message.error('操作失败！ 请稍后再试...')
+        this.$message({ type: 'success', message: '操作成功!' })
+        this.getRolesList()
+      }).catch(() => {
+        this.$message({ type: 'info', message: '已取消操作' })
+      })
+    },
     getRolesList: async function () {
       const { data: res } = await this.$http.get('roles')
       if (res.meta.status !== 200) return this.$message.error('数据获取失败!')
@@ -172,9 +249,35 @@ export default {
       this.rightsDialogVisible = false
       this.getRolesList()
     },
+    addRolesSubimt: async function () {
+      this.$refs.addRoleFormRef.validate(async vaild => {
+        if (!vaild) return this.$message.error('请按要求填写！')
+        const { data: res } = await this.$http.post('roles', this.addRoleForm)
+        if (res.meta.status !== 201) return this.$message.error('请求失败！ 请稍后再试...')
+        this.$message.success('操作成功！')
+        this.addRolesVisible = false
+        this.getRolesList()
+      })
+    },
+    editRolesSubimt: async function () {
+      this.$refs.editFoleFormRef.validate(async vaild => {
+        if (!vaild) return this.$message.error('请按要求填写！')
+        const { data: res } = await this.$http.put(`roles/${this.editRoleForm.roleId}`, this.editRoleForm)
+        if (res.meta.status !== 200) return this.$message.error('请求失败！ 请稍后再试...')
+        this.$message.success('操作成功！')
+        this.editRolesVisible = false
+        this.getRolesList()
+      })
+    },
     getRightsThrId: function (node, arr) {
       if (!node.children) { return arr.push(node.id) }
       node.children.forEach(item => this.getRightsThrId(item, arr))
+    },
+    showEditRoleDialog: function (roleRow) {
+      this.editRoleForm.roleId = roleRow.id
+      this.editRoleForm.roleName = roleRow.roleName
+      this.editRoleForm.roleDesc = roleRow.roleDesc
+      this.editRolesVisible = true
     },
     showSetRightsDialog: async function (data) {
       this.roleId = data.id
